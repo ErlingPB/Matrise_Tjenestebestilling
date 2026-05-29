@@ -1,79 +1,68 @@
-# Beslutningslogikk
+# Teknisk oversikt
 
-Dette dokumentet beskriver beslutningslogikken i POC-en.
+## Arkitektur
 
-## 1. Første vurdering
+Appen er en statisk enkeltside-app i én HTML-fil.
 
-Saksbehandler starter med tre valg:
+```text
+index.html
+├── HTML-struktur
+├── CSS-design
+└── JavaScript-logikk
+```
 
-| Valg | Hva betyr det? | Videre flyt |
-|---|---|---|
-| Ikke bestill nå | Leverandør tilfører ikke nok verdi nå | Gå direkte til saksnotat |
-| Hent mer info | Grunnlaget er for svakt | Gå direkte til saksnotat |
-| Bestill tjeneste | Leverandør kan tilføre verdi | Vurder kostnad og retning |
+## Viktige JavaScript-deler
 
-## 2. Kostnadsestimat
-
-Når saksbehandler velger «Bestill tjeneste», må saksbehandler anslå skadekostnad.
-
-| Estimat | Foreløpig veiledning |
+| Del | Funksjon |
 |---|---|
-| Under 10 000 | Vurder kontantoppgjør, digital vurdering eller mer informasjon fra kunden |
-| 10 000–50 000 | Små skader bør ofte løses uten fysisk tjeneste hvis saken er enkel |
-| 50 000–100 000 | Takst er ikke alltid nødvendig, men kan være nyttig i enkelte saker |
-| Over 100 000 | Takst bør normalt vurdere omfang, årsak og videre håndtering |
+| `serviceMatrix` | Inneholder hendelser, årsaker og anbefalt tjeneste |
+| `state` | Holder brukerens valg gjennom flyten |
+| `evaluateInitialChoice()` | Styrer første beslutning og om saken skal videre |
+| `getPreAssessmentPath()` | Bestemmer om saken stopper eller går til matrisen |
+| `showRecommendation()` | Slår opp anbefalt tjeneste etter hendelse og årsak |
+| `buildCaseNote()` | Lager forslag til saksnotat |
+| `toggleTheme()` | Bytter mellom lys og mørk modus |
 
-## 3. Foreløpig retning
+## LocalStorage
 
-Saksbehandler velger hva saken foreløpig peker mot.
+Appen bruker LocalStorage til å huske valgt tema:
 
-| Retning | Veiledning |
-|---|---|
-| Mulig avslag | Vurder om dokumentasjonen er god nok. Takst kan være nyttig hvis vi må dokumentere avslaget |
-| Kontantoppgjør | Vurder om mer informasjon fra kunden er nok til å løse saken uten tjeneste |
-| Reparasjon | Gå videre hvis leverandør skal vurdere, begrense eller reparere skaden |
+```javascript
+localStorage.setItem("leverandor-theme", next);
+```
 
-## 4. Når appen stopper før matrisen
+Dette påvirker bare visningen. Det lagrer ikke saksdata.
 
-Appen sender saken direkte til oppsummering når den foreløpige vurderingen tilsier at saken kan løses uten tjeneste.
+## Personvern og data
 
-I denne versjonen gjelder dette særlig:
+Denne POC-en sender ikke data til en server.
 
-- under 10 000
-- 10 000–50 000
-- 50 000–100 000 kombinert med kontantoppgjør
+Alle valg ligger bare i nettleseren mens siden er åpen.
 
-Dette er bevisst konservativt. Formålet er å hindre unødvendige leverandørbestillinger.
+## Anbefalt videre teknisk struktur
 
-## 5. Når appen sender saken videre til matrisen
+Hvis appen skal videreutvikles, kan filene deles slik:
 
-Appen sender saken videre til hendelsesmatrisen når saken trolig trenger leverandørvurdering.
+```text
+src/
+├── index.html
+├── styles.css
+├── app.js
+└── service-matrix.json
+```
 
-Eksempler:
+Fordeler:
 
-- 50 000–100 000 og mulig avslag
-- 50 000–100 000 og reparasjon
-- over 100 000
+- enklere vedlikehold
+- enklere kodegjennomgang
+- enklere testing av matrisen
+- mulig å oppdatere matrisen uten å endre hele appen
 
-## 6. Hendelsesmatrise
+## Kjente begrensninger i POC
 
-Når saken går videre til matrisen, velger saksbehandler:
-
-1. hendelse
-2. årsak/kilde
-
-Appen returnerer tjeneste fra `serviceMatrix`.
-
-Eksempler:
-
-| Hendelse | Årsak/kilde | Tjeneste |
-|---|---|---|
-| Akutt behov for hjelp | Alle hendelser | 08. Førstehjelp |
-| Vannskade | Vannledning Innvendig Åpen/Skjult | 07. Håndverk |
-| Andre Bygningsskader | Glass | 03. Glassmester |
-
-## 7. Saksnotat
-
-Til slutt lager appen et saksnotat basert på valgene.
-
-Saksnotatet er ment som et utgangspunkt, ikke en fasit.
+- Ingen brukerinnlogging
+- Ingen logging av valg
+- Ingen integrasjon mot NICE eller In4mo
+- Ingen sentral versjonsstyring av matrisen
+- Saksnotat må kopieres manuelt
+- Alle regler ligger hardkodet i JavaScript
